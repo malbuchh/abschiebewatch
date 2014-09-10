@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+              <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+          <!-- Custom styles for this template -->
+    <link href="css/cover.css" rel="stylesheet">
+
+  
+    <title>Abschiebewatch</title>
+  </head>
+<body>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://d3js.org/topojson.v1.min.js"></script>
+  <script src="jquery-2.1.1.js"></script>
+  <!-- I recommend you host this file on your own, since this will change without warning -->
+  <script src="world.js"></script>
+
+  
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+  
+      <div class="site-wrapper">
+
+      <div class="site-wrapper-inner">
+
+        <div class="cover-container">
+
+          <div class="masthead clearfix">
+            <div class="inner">
+              <h3 class="masthead-brand">Abschiebewatch</h3>
+              <ul class="nav masthead-nav">
+                <li class="active"><a href="#">Karte</a></li>
+                <li><a href="#">Über uns</a></li>
+                <li><a href="#">Kontakt</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="inner cover" id="map" style="position: relative; width: 1000px; height: 800px;">
+            
+          </div>
+
+          <div class="mastfoot">
+            <div class="inner">
+              Realisiert im Rahmen des <a href="http://codefor.de/berlin/index.html">Oklab Berlin</a>, Herbst 2014.
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  
+  
+ 
+     
+     <script>
+      var apiUrl = "http://community.codefor.de/abschiebungen/api/"
+      var formatJson = "?format=json"
+      var abschiebungZielland = "AbschiebungLandZielgebiet/"
+      var abschiebungNation = "AbschiebungLandNationalitaet/"
+      var ueberstellungNation = "UeberstellungHerkunftsstaat/"
+      var ueberstellungZielland = "UeberstellungZielgebiet/"
+      var zurueckschiebungLuftNation = "ZurueckschiebungLuftwegNationalitaet/"
+      var zurueckschiebungLuftZielland = "ZurueckschiebungLuftwegZielgebiet/"
+      var zurueckschiebungLandNation = "ZurueckschiebungLandwegNationalitaet/"
+      var zurueckweisungLuftNation = "ZurueckweisungLuftwegNationalitaet/"
+      var zurueckweisungLuftZiel = "ZurueckweisungLuftwegZielgebiet/"
+      
+        $.ajax({
+             type: 'GET',
+             url: apiUrl+"AbschiebungLandZielgebiet/"+formatJson,
+             processData: true,
+             data: {},
+             dataType: "json",
+             success: function (data) {
+                 processData(data);
+             }
+  });
+    function processData(data){
+     console.log(JSON.stringify(data));
+    }
+      
+      function colorValue(percentage) {
+        return Math.floor(percentage * 255);
+      }
+      
+      function toHex(value) {
+        return value.toString(16);
+      }
+      
+      function createRGB(hexValue) {
+        if (hexValue.length == 2) {
+          return '#'+hexValue+hexValue+hexValue;
+        } else if (hexValue.length == 1) {
+         return '#'+hexValue+hexValue+hexValue+hexValue+hexValue+hexValue   ;
+        }
+        return '#000000';
+      }
+      
+      function getHexValueForPercentage(percentage) {
+        return createRGB(toHex(colorValue(percentage)));
+      }
+      
+     
+       //basic map config with custom fills, mercator projection
+      var map = new Datamap({
+        scope: 'world',
+        element: document.getElementById('map'),
+        projection: 'mercator',
+        
+        fills: {
+          defaultFill: '#dddddd',
+          lt50: getHexValueForPercentage(0.5),
+          gt50: 'rgb(0,0,0)'
+        },
+        
+      })
+      
+      map.updateChoropleth({
+        USA: getHexValueForPercentage(0.3),
+        CAN: getHexValueForPercentage(0.1),
+        MEX: getHexValueForPercentage(1) 
+      });
+      
+      
+      //sample of the arc plugin
+      map.arc([
+       {
+        origin: {
+            latitude: 40.639722,
+            longitude: 73.778889
+        },
+        destination: {
+            latitude: 37.618889,
+            longitude: -122.375
+        }
+      },
+      {
+          origin: {
+              latitude: 30.194444,
+              longitude: -97.67
+          },
+          destination: {
+              latitude: 25.793333,
+              longitude: -0.290556
+          }
+      }
+      ], {strokeWidth: 2});
+       
+      
+       //bubbles, custom popup on hover template
+     map.bubbles([
+       {name: 'Hot', latitude: 21.32, longitude: 5.32, radius: 10, fillKey: 'gt50'},
+       {name: 'Chilly', latitude: -25.32, longitude: 120.32, radius: 18, fillKey: 'lt50'},
+       {name: 'Hot again', latitude: 21.32, longitude: -84.32, radius: 8, fillKey: 'gt50'},
+
+     ], {
+       popupTemplate: function(geo, data) {
+         return "<div class='hoverinfo'>It is " + data.name + "</div>";
+       }
+     });
+     </script>
+</body>
